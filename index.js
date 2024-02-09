@@ -2,23 +2,22 @@ const fs       = require('fs');
 const path     = require('path');
 const unzipper = require('unzipper');
 
+const currentDir = process.cwd();
+const srtDir     = path.join(currentDir, 'srt');
+
 const scanAndUnzip = async () => {
-  const currentDir = process.cwd();
-  const srtDir = path.join(currentDir, 'srt');
-
-  // Create the "srt" directory if it doesn't exist
-  if (!fs.existsSync(srtDir)) {
-    fs.mkdirSync(srtDir);
-  }
-
-  // Scan the current directory for zip files
   const files = fs.readdirSync(currentDir);
   const zipFiles = files.filter(file => path.extname(file) === '.zip');
+  if(zipFiles.length === 0) {
+    console.log('No zip files found');
+    return null;
+  }
+  if (!fs.existsSync(srtDir)) fs.mkdirSync(srtDir);
 
   // Unzip each zip file with .srt suffix to the "srt" directory
   for (const zipFile of zipFiles) {
     const zipFilePath = path.join(currentDir, zipFile);
-    const extractedFiles = await fs.createReadStream(zipFilePath)
+    await fs.createReadStream(zipFilePath)
       .pipe(unzipper.Parse())
       .on('entry', entry => {
         const fileName = entry.path;
@@ -30,18 +29,15 @@ const scanAndUnzip = async () => {
         }
       })
       .promise();
-    console.log(`Unzipped ${zipFile} to ${srtDir}`);
   }
+  console.log(`Unzipped ${zipFiles.length} files`);
+  return zipFiles.length;
 };
 
 const deleteZipFiles = () => {
-  const currentDir = process.cwd();
-
-  // Scan the current directory for zip files
-  const files = fs.readdirSync(currentDir);
+  const files    = fs.readdirSync(currentDir);
   const zipFiles = files.filter(file => path.extname(file) === '.zip');
-
-  // Delete each zip file
+  // Delete every zip file
   for (const zipFile of zipFiles) {
     const zipFilePath = path.join(currentDir, zipFile);
     fs.unlinkSync(zipFilePath);
@@ -66,22 +62,35 @@ const seasonEpisode = (fileName) => {
   return null;
 };
 
-const dump = () => {
-  const currentDir = process.cwd();
+(async () => {
+  const fileCount = await scanAndUnzip().catch(console.error);
 
-  // Scan the current directory for srt files
-  const files = fs.readdirSync(currentDir)
+  // deleteZipFiles();
+
+  // process.chdir(srtDir);
+  // console.log(`Changed to ${srtDir}`);
+
+  const files = fs.readdirSync(srtDir)
                   .filter(file => path.extname(file) === '.srt');
-
+  const fileArr =[];
   for (const fileName of files) {
     const se = seasonEpisode(fileName);
     if(se == null) continue;
     const {season, episode} = se;
-    console.log(`${fileName}: S${season}E${episode}`);
+    fileArr.push([season, episode, fileName]);
   }
-};
 
-// scanAndUnzip().catch(console.error);
-// deleteZipFiles();
+  fileArr.sort((a, b) => {
+    if (a[0] !== b[0]) return a[0] - b[0];
+    return a[1] - b[1];
+  });
 
-dump();
+  let count = 0;
+  for (const arr of fileArr) {
+    const [season, episode] = arr;
+    const countStr = (++count).toString().padStart(2, '0');
+    console.log(
+      `processing ${countStr}/${fileArr.length}: S${season}E${episode}`);
+  }
+})();
+
