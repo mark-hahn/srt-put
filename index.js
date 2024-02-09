@@ -81,11 +81,17 @@ const findVideoFiles = (dir, videoFiles) => {
         if(se === null) return;
         const {season, episode} = se;
         const noExt = filePath.slice(0, -4);
-        videoFiles.push([season, episode, dir, noExt]);
+        videoFiles.push([season, episode, noExt]);
       }
     }
   }
 };
+
+const getSeaEpiStr = (season, episode) => {
+  const seaStr = season.toString().padStart(2, '0');
+  const epiStr = episode.toString().padStart(2, '0');
+  return `S${seaStr}E${epiStr}`;
+}
 
 /////////////////  MAIN  ///////////////////////
 (async () => {
@@ -93,40 +99,43 @@ const findVideoFiles = (dir, videoFiles) => {
 
   // deleteZipFiles();
   
-  const srtFiles = fs.readdirSync(srtDir).filter(file =>
+  const srtFileNames = fs.readdirSync(srtDir).filter(file =>
         path.extname(file).toLowerCase() === '.srt');
-  const fileArr = [];
-  for (const fileName of srtFiles) {
+  const srtFiles = [];
+  for (const fileName of srtFileNames) {
     const se = seasonEpisode(fileName);
     if(se == null) continue;
     const {season, episode} = se;
-    fileArr.push([season, episode, fileName]);
+    const noExt = path.join(srtDir, fileName);
+    srtFiles.push([season, episode, noExt]);
   }
 
-  fileArr.sort((a, b) => {
+  srtFiles.sort((a, b) => {
     if (a[0] !== b[0]) return a[0] - b[0];
     return a[1] - b[1];
   });
   
   const videoFiles = [];
   findVideoFiles(currentDir, videoFiles);
+  const vidfilesBySeaEpi = {};
+  for (const videoFile of videoFiles) {
+    const season  = videoFile[0];
+    const episode = videoFile[1];
+    const key     = season + 'x' + episode;
+    vidfilesBySeaEpi[key] = videoFile;
+  }
+  // console.log(vidfilesBySeaEpi);
 
-  videoFiles.sort((a, b) => {
-    if (a[0] !== b[0]) return a[0] - b[0];
-    return a[1] - b[1];
-  });
-  
-  console.log(videoFiles);
+  const matchedFiles = [];
+  for (const srtFile of srtFiles) {
+    const [season, episode, fileName] = srtFile;
+    const key = `${season}x${episode}`;
+    if (vidfilesBySeaEpi.hasOwnProperty(key)) {
+      const videoFile = vidfilesBySeaEpi[key];
+      matchedFiles.push({ srtFile, videoFile});
+    }
+  }
+  console.log(matchedFiles);
 
-
-  // let count = 0;
-  // for (const arr of fileArr) {
-  //   const [season, episode] = arr;
-  //   const countStr = (++count).toString().padStart(2, '0');
-  //   const seaStr   = season   .toString().padStart(2, '0');
-  //   const epiStr   = episode  .toString().padStart(2, '0');
-  //   console.log(
-  //     `processing ${countStr}/${fileArr.length}: S${seaStr}E${epiStr}`);
-  // }
 })();
 
