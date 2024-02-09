@@ -119,9 +119,10 @@ function deleteDirectoryRecursive(dirPath) {
   const zipCount = await scanAndUnzip().catch(console.error);
   if(zipCount === 0) {
     console.log('No zip files found');
+    deleteDirectoryRecursive(srtDir);
     return;
   }
-  
+
   deleteZipFiles();
 
   const videoFiles = [];
