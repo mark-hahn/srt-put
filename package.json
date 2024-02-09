@@ -1,0 +1,22 @@
+{
+  "name": "srt-put",
+  "version": "1.0.0",
+  "description": "store srt files",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mark-hahn/srt-put.git"
+  },
+  "author": "mark-hahn",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mark-hahn/srt-put/issues"
+  },
+  "homepage": "https://github.com/mark-hahn/srt-put#readme",
+  "dependencies": {
+    "unzipper": "^0.10.14"
+  }
+}
