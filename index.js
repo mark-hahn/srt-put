@@ -32,7 +32,7 @@ const scanAndUnzip = async () => {
       })
       .promise();
   }
-  console.log(`Unzipped ${zipFiles.length} files`);
+  console.log(`Unzipped ${zipFiles.length} files\n`);
   return zipFiles.length;
 };
 
@@ -116,8 +116,12 @@ function deleteDirectoryRecursive(dirPath) {
 
 /////////////////  MAIN  ///////////////////////
 (async () => {
-  await scanAndUnzip().catch(console.error);
-
+  const zipCount = await scanAndUnzip().catch(console.error);
+  if(zipCount === 0) {
+    console.log('No zip files found');
+    return;
+  }
+  
   deleteZipFiles();
 
   const videoFiles = [];
