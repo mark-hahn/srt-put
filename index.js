@@ -99,6 +99,21 @@ const copySrtFile = (srtFile, videoFile) => {
   fs.copyFileSync(srtFile, srtFileForVideoFile);
 }
 
+function deleteDirectoryRecursive(dirPath) {
+  if (fs.existsSync(dirPath)) {
+    fs.readdirSync(dirPath).forEach(function(file, index){
+      const curPath = path.join(dirPath, file);
+      if (fs.lstatSync(curPath).isDirectory()) { // recurse
+        deleteDirectoryRecursive(curPath);
+      } else { // delete file
+        fs.unlinkSync(curPath);
+      }
+    });
+    fs.rmdirSync(dirPath);
+  }
+}
+
+
 /////////////////  MAIN  ///////////////////////
 (async () => {
   await scanAndUnzip().catch(console.error);
@@ -172,6 +187,5 @@ const copySrtFile = (srtFile, videoFile) => {
     }
   }
 
-  // fs.unlinkSync(srtDir);
-
+  deleteDirectoryRecursive(srtDir);
 })();
