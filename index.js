@@ -62,6 +62,7 @@ const seasonEpisode = (fileName) => {
   return null;
 };
 
+/////////////////  MAIN  ///////////////////////
 (async () => {
   const fileCount = await scanAndUnzip().catch(console.error);
 
@@ -89,8 +90,10 @@ const seasonEpisode = (fileName) => {
   for (const arr of fileArr) {
     const [season, episode] = arr;
     const countStr = (++count).toString().padStart(2, '0');
+    const seaStr   = season   .toString().padStart(2, '0');
+    const epiStr   = episode  .toString().padStart(2, '0');
     console.log(
-      `processing ${countStr}/${fileArr.length}: S${season}E${episode}`);
+      `processing ${countStr}/${fileArr.length}: S${seaStr}E${epiStr}`);
   }
 })();
 
