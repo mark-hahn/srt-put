@@ -40,11 +40,10 @@ const deleteZipFiles = () => {
   const files    = fs.readdirSync(currentDir);
   const zipFiles = files.filter(
           file => path.extname(file) === '.zip');
-  // Delete every zip file
   for (const zipFile of zipFiles) {
     const zipFilePath = path.join(currentDir, zipFile);
     fs.unlinkSync(zipFilePath);
-    console.log(`Deleted ${zipFile}`);
+    // console.log(`Deleted ${zipFile}`);
   }
 };
 
@@ -93,12 +92,19 @@ const getSeaEpiStr = (season, episode) => {
   return `S${seaStr}E${epiStr}`;
 }
 
+const copySrtFile = (srtFile, videoFile) => {
+  const srtFileForVideoFile = videoFile + '.English.srt';
+  // console.log(
+  //   `Copying ${srtFile} to\n ${srtFileForVideoFile}`);
+  fs.copyFileSync(srtFile, srtFileForVideoFile);
+}
+
 /////////////////  MAIN  ///////////////////////
 (async () => {
   await scanAndUnzip().catch(console.error);
 
-  // deleteZipFiles();
-  
+  deleteZipFiles();
+
   const videoFiles = [];
   findVideoFiles(currentDir, videoFiles);
   const vidfilesBySeaEpi = {};
@@ -140,7 +146,8 @@ const getSeaEpiStr = (season, episode) => {
           const key = season + 'x' + i;
           if(!vidfilesBySeaEpi.hasOwnProperty(key)) {
             const keyLast = season + 'x' + (i-1);
-            console.log(`        using ${keyLast}`);
+            console.log('  ' + srtFile[2], '  -> \n',
+                        ' ' + vidfilesBySeaEpi[keyLast][2]);
             srtfilesBySeaEpi[keyLast] = srtFile;
             continue srtFilesLoop;
           }
@@ -155,16 +162,16 @@ const getSeaEpiStr = (season, episode) => {
   for(let videoFile of videoFiles) {
     const [season, episode] = videoFile;
     const key = `${season}x${episode}`;
-    if(!srtfilesBySeaEpi.hasOwnProperty(key)) {
+    const srtFile = srtfilesBySeaEpi[key];
+    if(!srtFile) {
       console.log(`No srt file ${key}`);
+      continue
+    }
+    else {
+      copySrtFile(srtFile[2], videoFile[2]);
     }
   }
 
-  for (const srtFile of srtFiles) {
-    const [season, episode, fileName] = srtFile;
-    const key = `${season}x${episode}`;
-    const videoFile = vidfilesBySeaEpi[key];
-    // console.log(srtFile[2], videoFile[2]);
-  }
-})();
+  // fs.unlinkSync(srtDir);
 
+})();
