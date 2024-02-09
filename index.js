@@ -99,22 +99,6 @@ const getSeaEpiStr = (season, episode) => {
 
   // deleteZipFiles();
   
-  const srtFileNames = fs.readdirSync(srtDir).filter(file =>
-        path.extname(file).toLowerCase() === '.srt');
-  const srtFiles = [];
-  for (const fileName of srtFileNames) {
-    const se = seasonEpisode(fileName);
-    if(se == null) continue;
-    const {season, episode} = se;
-    const noExt = path.join(srtDir, fileName);
-    srtFiles.push([season, episode, noExt]);
-  }
-
-  srtFiles.sort((a, b) => {
-    if (a[0] !== b[0]) return a[0] - b[0];
-    return a[1] - b[1];
-  });
-  
   const videoFiles = [];
   findVideoFiles(currentDir, videoFiles);
   const vidfilesBySeaEpi = {};
@@ -126,16 +110,61 @@ const getSeaEpiStr = (season, episode) => {
   }
   // console.log(vidfilesBySeaEpi);
 
-  const matchedFiles = [];
+  const srtFileNames = fs.readdirSync(srtDir).filter(file =>
+        path.extname(file).toLowerCase() === '.srt');
+  const srtFiles = [];
+  for (const fileName of srtFileNames) {
+    const se = seasonEpisode(fileName);
+    if(se == null) continue;
+    const {season, episode} = se;
+    const nameWithDir = path.join(srtDir, fileName);
+    srtFiles.push([season, episode, nameWithDir]);
+  }
+
+  srtFiles.sort((a, b) => {
+    if (a[0] !== b[0]) return a[0] - b[0];
+    return a[1] - b[1];
+  });
+  // console.log(srtFiles);
+
+  const srtfilesBySeaEpi = {};
+  srtFilesLoop:
+  for (const srtFile of srtFiles) {
+    const season  = srtFile[0];
+    const episode = srtFile[1];
+    const key     = season + 'x' + episode;
+    if(!vidfilesBySeaEpi.hasOwnProperty(key)) {
+      console.log(`No video file ${key}`);
+      if(episode === 0) {
+        for(let i = 1; ; i++) {
+          const key = season + 'x' + i;
+          if(!vidfilesBySeaEpi.hasOwnProperty(key)) {
+            const keyLast = season + 'x' + (i-1);
+            console.log(`        using ${keyLast}`);
+            srtfilesBySeaEpi[keyLast] = srtFile;
+            continue srtFilesLoop;
+          }
+        }
+      }
+      continue srtFilesLoop;
+    }
+    srtfilesBySeaEpi[key] = srtFile;
+  }
+  // console.log(srtfilesBySeaEpi);
+
+  for(let videoFile of videoFiles) {
+    const [season, episode] = videoFile;
+    const key = `${season}x${episode}`;
+    if(!srtfilesBySeaEpi.hasOwnProperty(key)) {
+      console.log(`No srt file ${key}`);
+    }
+  }
+
   for (const srtFile of srtFiles) {
     const [season, episode, fileName] = srtFile;
     const key = `${season}x${episode}`;
-    if (vidfilesBySeaEpi.hasOwnProperty(key)) {
-      const videoFile = vidfilesBySeaEpi[key];
-      matchedFiles.push({ srtFile, videoFile});
-    }
+    const videoFile = vidfilesBySeaEpi[key];
+    // console.log(srtFile[2], videoFile[2]);
   }
-  console.log(matchedFiles);
-
 })();
 
