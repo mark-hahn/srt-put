@@ -89,20 +89,10 @@ const findVideoFiles = (dir, videoFiles) => {
   }
 };
 
-const getSeaEpiStr = (season, episode) => {
-  const seaStr = season.toString().padStart(2, '0');
-  const epiStr = episode.toString().padStart(2, '0');
-  return `S${seaStr}E${epiStr}`;
-}
-
 const copySrtFiles = (srtFiles, videoFile) => {
   for(let i = 0; i < srtFiles.length; i++) {
-    const srtFileArr = srtFiles[i];
-    const src = srtFileArr[2];
-    const sfx = (srtFiles.length == 1 
-                  ? '.English' 
-                  : '.English' + (i+1));
-    const dst = `${videoFile}${sfx}.srt`;
+    const src = srtFiles[i][2];
+    const dst = `${videoFile}.English${i+1}.srt`;
     // console.log(
     //   `Copying ${src} to\n ${dst}`);
     fs.copyFileSync(src, dst);
