@@ -1,3 +1,6 @@
+
+const DEBUG = false;
+
 const fs       = require('fs');
 const path     = require('path');
 const unzipper = require('unzipper');
@@ -92,19 +95,26 @@ const getSeaEpiStr = (season, episode) => {
   return `S${seaStr}E${epiStr}`;
 }
 
-const copySrtFile = (srtFile, videoFile) => {
-  const srtFileForVideoFile = videoFile + '.English.srt';
-  // console.log(
-  //   `Copying ${srtFile} to\n ${srtFileForVideoFile}`);
-  fs.copyFileSync(srtFile, srtFileForVideoFile);
+const copySrtFiles = (srtFiles, videoFile) => {
+  for(let i = 0; i < srtFiles.length; i++) {
+    const srtFileArr = srtFiles[i];
+    const src = srtFileArr[2];
+    const sfx = (srtFiles.length == 1 
+                  ? '.English' 
+                  : '.English' + (i+1));
+    const dst = `${videoFile}${sfx}.srt`;
+    // console.log(
+    //   `Copying ${src} to\n ${dst}`);
+    fs.copyFileSync(src, dst);
+  }
 }
 
-function deleteDirectoryRecursive(dirPath) {
+function deleteDir(dirPath) {
   if (fs.existsSync(dirPath)) {
     fs.readdirSync(dirPath).forEach(function(file, index){
       const curPath = path.join(dirPath, file);
       if (fs.lstatSync(curPath).isDirectory()) { // recurse
-        deleteDirectoryRecursive(curPath);
+        deleteDir(curPath);
       } else { // delete file
         fs.unlinkSync(curPath);
       }
@@ -113,13 +123,22 @@ function deleteDirectoryRecursive(dirPath) {
   }
 }
 
+const addPropMulVal = (obj, key, value) => {
+  if(obj.hasOwnProperty(key)) {
+    obj[key].push(value);
+  }
+  else {
+    obj[key] = [value];
+  }
+}
+
 
 /////////////////  MAIN  ///////////////////////
 (async () => {
   const zipCount = await scanAndUnzip().catch(console.error);
-  if(zipCount === 0) {
+  if(!DEBUG && zipCount === 0) {
     console.log('No zip files found');
-    deleteDirectoryRecursive(srtDir);
+    deleteDir(srtDir);
     return;
   }
 
@@ -168,29 +187,28 @@ function deleteDirectoryRecursive(dirPath) {
             const keyLast = season + 'x' + (i-1);
             console.log('  ' + srtFile[2], '  -> \n',
                         ' ' + vidfilesBySeaEpi[keyLast][2]);
-            srtfilesBySeaEpi[keyLast] = srtFile;
+            addPropMulVal(srtfilesBySeaEpi, keyLast, srtFile);
             continue srtFilesLoop;
           }
         }
       }
       continue srtFilesLoop;
     }
-    srtfilesBySeaEpi[key] = srtFile;
+    addPropMulVal(srtfilesBySeaEpi, key, srtFile);
   }
   // console.log(srtfilesBySeaEpi);
 
   for(let videoFile of videoFiles) {
     const [season, episode] = videoFile;
     const key = `${season}x${episode}`;
-    const srtFile = srtfilesBySeaEpi[key];
-    if(!srtFile) {
+    const srtFiles = srtfilesBySeaEpi[key];
+    if(!srtFiles) {
       console.log(`No srt file ${key}`);
       continue
     }
-    else {
-      copySrtFile(srtFile[2], videoFile[2]);
-    }
+    else
+      copySrtFiles(srtFiles, videoFile[2]);
   }
 
-  deleteDirectoryRecursive(srtDir);
+  if(!DEBUG) deleteDir(srtDir);
 })();
