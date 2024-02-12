@@ -93,8 +93,7 @@ const copySrtFiles = (srtFiles, videoFile) => {
   for(let i = 0; i < srtFiles.length; i++) {
     const src = srtFiles[i][2];
     const dst = `${videoFile}.English${i+1}.srt`;
-    // console.log(
-    //   `Copying ${src} to\n ${dst}`);
+    // console.log(`Copying ${src} to\n ${dst}`);
     fs.copyFileSync(src, dst);
   }
 }
@@ -155,12 +154,6 @@ const addPropMulVal = (obj, key, value) => {
     const nameWithDir = path.join(srtDir, fileName);
     srtFiles.push([season, episode, nameWithDir]);
   }
-
-  srtFiles.sort((a, b) => {
-    if (a[0] !== b[0]) return a[0] - b[0];
-    return a[1] - b[1];
-  });
-  // console.log(srtFiles);
 
   const srtfilesBySeaEpi = {};
   srtFilesLoop:
